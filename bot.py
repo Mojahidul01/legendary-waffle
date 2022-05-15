@@ -1,5 +1,6 @@
 from curses import meta
 from re import I
+import sys
 import requests
 from config import bot
 import Torrent_download
@@ -61,9 +62,11 @@ async def download_torrent(event):
             link = generate_magnet(link)
             print(link)
 
+        # for nyaa.si links
         if "nyaa.si" in link:
             res = requests.get(link,allow_redirects=True,stream=True)
             link = generate_magnet(res.content)
+            print(link)
 
         directory = 'downloads'
         delete_files(directory)
@@ -76,14 +79,16 @@ async def download_torrent(event):
         await upload_files(event,file_list)
         delete_files(directory)
     except Exception as e:
-        # print(e)
-        await bot.send_message(event.chat_id,e)
-        pass
+        if str(e) == "TimeoutError":
+            await bot.send_message(event.chat_id,f"{str(e)}, Process exceeded {Torrent_download.timeout_time}s time limit")
+        else:
+            await bot.send_message(event.chat_id,str(e))
     finally:
         is_busy = False
 
-
-
+@bot.on(events.NewMessage(pattern='/cancel'))
+async def download_torrent(event):
+    Torrent_download.cancel = True
 
 bot.start()
 bot.run_until_disconnected()

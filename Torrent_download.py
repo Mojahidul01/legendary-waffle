@@ -1,4 +1,5 @@
 #sudo apt-get install python3-libtorrent
+from socket import timeout
 from threading import Event
 import libtorrent as lt
 import time
@@ -6,9 +7,12 @@ import datetime
 from config import bot
 import math
 
-
+cancel = False
+timeout_time = 60
 
 async def download_torrent(link, event):
+    global cancel
+    cancel = False
     ses = lt.session()
     ses.listen_on(6881, 6891)
     params = {
@@ -28,14 +32,18 @@ async def download_torrent(link, event):
     print(datetime.datetime.now())
 
     message = await bot.send_message(event.chat_id,"Downloading Metadata...")
-    while (not handle.has_metadata()):
+    while (not handle.has_metadata() and cancel == False):
+        end = time.time()
+        if (int((end-begin)%60) > timeout_time):
+            raise Exception("TimeoutError")
         time.sleep(1)
+    if cancel == True: raise Exception("process cancelled")
 
     await bot.edit_message(event.chat_id,message,"Got Metadata, Starting Torrent Download...")
 
     print("Starting", handle.name())
     await bot.edit_message(event.chat_id,message,f"Starting, {handle.name()}")
-    while (handle.status().state != lt.torrent_status.seeding):
+    while (handle.status().state != lt.torrent_status.seeding and cancel == False):
         s = handle.status()
         state_str = ['queued', 'checking', 'downloading metadata', \
                 'downloading', 'finished', 'seeding', 'allocating']
@@ -62,3 +70,4 @@ async def download_torrent(link, event):
     await bot.edit_message(event.chat_id,message,f"{handle.name()} COMPLETE")
 
     await bot.send_message(event.chat_id, f"Elapsed Time: {int((end-begin)//60)} min :{int((end-begin)%60)} sec")
+    if cancel == True: raise Exception("Process Cancelled")
