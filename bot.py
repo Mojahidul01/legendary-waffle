@@ -37,7 +37,6 @@ async def upload_files(event,file_list):
 
 def generate_magnet(file_bytes):
     metadata = bencode.bdecode(file_bytes)
-    print(metadata)
     hashcontents = bencode.bencode(metadata[b'info'])
     digest = hashlib.sha1(hashcontents).digest()
     b32hash = base64.b32encode(digest)
