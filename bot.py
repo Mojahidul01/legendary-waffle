@@ -70,7 +70,7 @@ async def download_torrent(event):
 
         directory = 'downloads'
         delete_files(directory)
-        await bot.send_message(event.chat_id,"downloading torrent....")
+        await bot.send_message(event.chat_id,"downloading torrent.... use /cancel to cancel")
         await Torrent_download.download_torrent(link,event)
         file_list = []  
         for root,subdirectories, files in os.walk(directory):
