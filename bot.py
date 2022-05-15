@@ -77,6 +77,7 @@ async def download_torrent(event):
             for file in files:
                 file_list.append(os.path.join(root, file))
         await upload_files(event,file_list)
+        await bot.send_message(event.chat_id,"Done!")
         delete_files(directory)
     except Exception as e:
         if str(e) == "TimeoutError":
