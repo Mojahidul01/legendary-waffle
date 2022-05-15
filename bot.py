@@ -4,6 +4,8 @@ import Torrent_download
 from telethon import events
 from FastTelethonhelper import fast_upload
 import os , shutil
+import bencode
+import hashlib,base64
 
 
 def delete_files(folder):
@@ -28,6 +30,13 @@ async def upload_files(event,file_list):
         await bot.send_message(event.chat_id, name[-1], file = file, force_document=True)
         await bot.delete_messages(event.chat_id, msg)
 
+def generate_magnet(file_bytes):
+    metadata = bencode.bdecode(file_bytes)
+    hashcontents = bencode.bencode(metadata['info'])
+    digest = hashlib.sha1(hashcontents).digest()
+    b32hash = base64.b32encode(digest)
+    return f"magnet:?xt=urn:btih:{str(b32hash)}"
+
 @bot.on(events.NewMessage(pattern='/torrent'))
 async def download_torrent(event):
     try:
@@ -37,10 +46,12 @@ async def download_torrent(event):
             link  = split[-1]
         else:
             link = await bot.download_file(x.media)
+            link = generate_magnet(link)
 
         if "nyaa" in link:
             res = requests.get(link,allow_redirects=True,stream=True)
             link = res.content
+            link = generate_magnet(link)
 
         directory = 'downloads'
         delete_files(directory)
