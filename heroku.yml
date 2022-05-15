@@ -1,0 +1,5 @@
+build:
+  docker:
+    worker: DOCKERFILE
+run:
+  worker: python3 bot.py
