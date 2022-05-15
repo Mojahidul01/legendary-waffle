@@ -7,7 +7,7 @@ import os , shutil
 import bencodepy as bencode
 import hashlib,base64
 
-global is_busy
+
 is_busy = False
 
 def delete_files(folder):
@@ -44,6 +44,7 @@ def generate_magnet(file_bytes):
 
 @bot.on(events.NewMessage(pattern='/torrent'))
 async def download_torrent(event):
+    global is_busy
     if is_busy == True : return
     try:
         is_busy = True
