@@ -4,9 +4,11 @@ import Torrent_download
 from telethon import events
 from FastTelethonhelper import fast_upload
 import os , shutil
-import bencode
+import bencodepy as bencode
 import hashlib,base64
 
+global is_busy
+is_busy = False
 
 def delete_files(folder):
     folder = folder
@@ -30,6 +32,7 @@ async def upload_files(event,file_list):
         await bot.send_message(event.chat_id, name[-1], file = file, force_document=True)
         await bot.delete_messages(event.chat_id, msg)
 
+
 def generate_magnet(file_bytes):
     metadata = bencode.bdecode(file_bytes)
     hashcontents = bencode.bencode(metadata['info'])
@@ -37,9 +40,13 @@ def generate_magnet(file_bytes):
     b32hash = base64.b32encode(digest)
     return f"magnet:?xt=urn:btih:{str(b32hash)}"
 
+
+
 @bot.on(events.NewMessage(pattern='/torrent'))
 async def download_torrent(event):
+    if is_busy == True : return
     try:
+        is_busy = True
         x = await event.get_reply_message()
         if x == None or x.media == None:
             split  = event.raw_text.split()
