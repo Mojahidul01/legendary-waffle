@@ -1,3 +1,5 @@
+from curses import meta
+from re import I
 import requests
 from config import bot
 import Torrent_download
@@ -35,17 +37,20 @@ async def upload_files(event,file_list):
 
 def generate_magnet(file_bytes):
     metadata = bencode.bdecode(file_bytes)
-    hashcontents = bencode.bencode(metadata['info'])
+    print(metadata)
+    hashcontents = bencode.bencode(metadata[b'info'])
     digest = hashlib.sha1(hashcontents).digest()
     b32hash = base64.b32encode(digest)
-    return f"magnet:?xt=urn:btih:{str(b32hash)}"
+    return f"magnet:?xt=urn:btih:{b32hash.decode()}"
 
 
 
 @bot.on(events.NewMessage(pattern='/torrent'))
 async def download_torrent(event):
     global is_busy
-    if is_busy == True : return
+    if is_busy == True : 
+        await bot.send_message(event.chat_id,"busy with another task, try again later")
+        return
     try:
         is_busy = True
         x = await event.get_reply_message()
@@ -53,13 +58,13 @@ async def download_torrent(event):
             split  = event.raw_text.split()
             link  = split[-1]
         else:
-            link = await bot.download_file(x.media)
+            link = await bot.download_file(x)
             link = generate_magnet(link)
+            print(link)
 
-        if "nyaa" in link:
+        if "nyaa.si" in link:
             res = requests.get(link,allow_redirects=True,stream=True)
-            link = res.content
-            link = generate_magnet(link)
+            link = generate_magnet(res.content)
 
         directory = 'downloads'
         delete_files(directory)
@@ -72,7 +77,11 @@ async def download_torrent(event):
         await upload_files(event,file_list)
         delete_files(directory)
     except Exception as e:
+        # print(e)
         await bot.send_message(event.chat_id,e)
+        pass
+    finally:
+        is_busy = False
 
 
 
