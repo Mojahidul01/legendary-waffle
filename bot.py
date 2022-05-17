@@ -1,7 +1,7 @@
-from curses import meta
-from re import I
-import sys
+from glob import glob
+from queue import Queue
 import requests
+import scipy as sp
 from config import bot
 import Torrent_download
 from telethon import events
@@ -12,6 +12,9 @@ import hashlib,base64
 
 
 is_busy = False
+link_queue = []
+
+
 
 def delete_files(folder):
     folder = folder
@@ -78,6 +81,8 @@ async def download_torrent(event):
                 file_list.append(os.path.join(root, file))
         await upload_files(event,file_list)
         await bot.send_message(event.chat_id,"Done!")
+
+
         delete_files(directory)
     except Exception as e:
         if str(e) == "TimeoutError":
@@ -90,6 +95,56 @@ async def download_torrent(event):
 @bot.on(events.NewMessage(pattern='/cancel'))
 async def download_torrent(event):
     Torrent_download.cancel = True
+
+
+@bot.on(events.NewMessage(pattern='/aq'))
+async def add_queue(event):
+    global link_queue
+    split  = event.raw_text.split()
+    split.pop(0)
+    link_queue = split
+    print(link_queue)
+    await bot.send_message(event.chat_id,f"Added links to queue")
+
+@bot.on(events.NewMessage(pattern='/sq'))
+async def start_queue(event):
+    global link_queue 
+    while link_queue != []:
+        try:
+            link = link_queue.pop(0)
+            if "nyaa.si" in link:
+                res = requests.get(link,allow_redirects=True,stream=True)
+                link = generate_magnet(res.content)
+                print(link)
+
+            directory = 'downloads'
+            delete_files(directory)
+            await bot.send_message(event.chat_id,"downloading torrent.... use /cancel to cancel")
+            await Torrent_download.download_torrent(link,event)
+            file_list = []  
+            for root,subdirectories, files in os.walk(directory):
+                for file in files:
+                    file_list.append(os.path.join(root, file))
+            await upload_files(event,file_list)
+            await bot.send_message(event.chat_id,"Done!")
+        except Exception as e:
+            await bot.send_message(event.chat_id,str(e))
+
+@bot.on(events.NewMessage(pattern='/clearq'))
+async def clearq(event):
+    global link_queue
+    link_queue = []
+    await bot.send_message(event.chat_id,"Queue cleared!")
+
+@bot.on(events.NewMessage(pattern='/listq'))
+async def listq(event):
+    global link_queue 
+    if link_queue != []:
+        msg = "\n".join(link_queue)
+        await bot.send_message(event.chat_id,f"These links are in queue\n\n{msg}")
+    else:
+        await bot.send_message(event.chat_id,"Nothing in Queue")
+
 
 bot.start()
 bot.run_until_disconnected()
