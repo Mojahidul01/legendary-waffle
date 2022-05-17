@@ -100,11 +100,14 @@ async def download_torrent(event):
 @bot.on(events.NewMessage(pattern='/aq'))
 async def add_queue(event):
     global link_queue
-    split  = event.raw_text.split()
-    split.pop(0)
-    link_queue = split
-    print(link_queue)
-    await bot.send_message(event.chat_id,f"Added links to queue")
+    try:
+        split  = event.raw_text.split()
+        split.pop(0)
+        link_queue = split
+        print(link_queue)
+        await bot.send_message(event.chat_id,f"Added links to queue")
+    except Exception as e:
+        await bot.send_message(event.chat_id,str(e))
 
 @bot.on(events.NewMessage(pattern='/sq'))
 async def start_queue(event):
