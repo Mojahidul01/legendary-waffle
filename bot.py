@@ -179,8 +179,7 @@ async def get_magnet(event):
         
         await bot.send_message(event.chat_id,f"`{str(link)}`")
     except Exception as e:
-            print(e)
-            pass
+            await bot.send_message(event.chat_id,str(e))
             # await bot.send_message(event.chat_id,str(e))
 
 
