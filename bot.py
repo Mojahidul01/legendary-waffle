@@ -1,4 +1,3 @@
-from tkinter import E
 import requests
 import urllib.parse
 from urllib.parse import unquote, urlencode
