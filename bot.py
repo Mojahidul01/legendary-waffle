@@ -1,3 +1,4 @@
+from tkinter import E
 import requests
 import urllib.parse
 from urllib.parse import unquote, urlencode
@@ -44,17 +45,21 @@ def generate_magnet(file_bytes):
     digest = hashlib.sha1(hashcontents).digest()
     b32hash = base64.b32encode(digest).decode("utf-8")
 
-    b32 = urlencode({'xt': 'urn:btih:%s' % b32hash})
-    b32 = unquote(b32)
+    try:
 
-    params = {'dn':  metadata[b'info'][b'name'],
-              'tr':  metadata[b'announce']}
-    
+        b32 = urlencode({'xt': 'urn:btih:%s' % b32hash})
+        b32 = unquote(b32)
 
-    paramstr = b32 + '&' + urllib.parse.urlencode(params)
-    magnet = 'magnet:?%s' % paramstr
+        params = {'dn':  metadata[b'info'][b'name'],
+                  'tr':  metadata[b'announce']}
 
-    return magnet
+
+        paramstr = b32 + '&' + urllib.parse.urlencode(params)
+        magnet = 'magnet:?%s' % paramstr
+
+        return magnet
+    except:
+        return "magnet:?xt=urn:btih:%s" % b32hash
 
 
 
