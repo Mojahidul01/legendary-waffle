@@ -1,14 +1,11 @@
 #sudo apt-get install python3-libtorrent
-from socket import timeout
-from threading import Event
 import libtorrent as lt
 import time
 import datetime
-from config import bot
-import math
+from config import bot, timeout
 
 cancel = False
-timeout_time = 60
+timeout_time = timeout
 
 async def download_torrent(link, event):
     global cancel

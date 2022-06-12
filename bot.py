@@ -1,7 +1,6 @@
-from glob import glob
-from queue import Queue
 import requests
-import scipy as sp
+import urllib.parse
+from urllib.parse import unquote, urlencode
 from config import bot
 import Torrent_download
 from telethon import events
@@ -43,8 +42,19 @@ def generate_magnet(file_bytes):
     metadata = bencode.bdecode(file_bytes)
     hashcontents = bencode.bencode(metadata[b'info'])
     digest = hashlib.sha1(hashcontents).digest()
-    b32hash = base64.b32encode(digest)
-    return f"magnet:?xt=urn:btih:{b32hash.decode()}"
+    b32hash = base64.b32encode(digest).decode("utf-8")
+
+    b32 = urlencode({'xt': 'urn:btih:%s' % b32hash})
+    b32 = unquote(b32)
+
+    params = {'dn':  metadata[b'info'][b'name'],
+              'tr':  metadata[b'announce']}
+    
+
+    paramstr = b32 + '&' + urllib.parse.urlencode(params)
+    magnet = 'magnet:?%s' % paramstr
+
+    return magnet
 
 
 
@@ -122,7 +132,7 @@ async def start_queue(event):
 
             directory = 'downloads'
             delete_files(directory)
-            await bot.send_message(event.chat_id,"downloading torrent.... \n\nuse /cancel to cancel")
+            await bot.send_message(event.chat_id,"downloading torrent.... ")
             await Torrent_download.download_torrent(link,event)
             file_list = []  
             for root,subdirectories, files in os.walk(directory):
@@ -147,6 +157,31 @@ async def listq(event):
         await bot.send_message(event.chat_id,f"These links are in queue\n\n{msg}")
     else:
         await bot.send_message(event.chat_id,"Nothing in Queue")
+
+
+@bot.on(events.NewMessage(pattern='/getmagnet'))
+async def get_magnet(event):
+    try:
+        x = await event.get_reply_message()
+        if x == None or x.media == None:
+            split  = event.raw_text.split()
+            link  = split[-1]
+        else:
+            link = await bot.download_file(x)
+            link = generate_magnet(link)
+            print(link)
+
+        # for nyaa.si links
+        if "nyaa.si" in link:
+            res = requests.get(link,allow_redirects=True,stream=True)
+            link = generate_magnet(res.content)
+            print(link)
+        
+        await bot.send_message(event.chat_id,f"`{str(link)}`")
+    except Exception as e:
+            print(e)
+            pass
+            # await bot.send_message(event.chat_id,str(e))
 
 
 bot.start()
