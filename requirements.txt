@@ -3,4 +3,3 @@ https://codeload.github.com/MiyukiKun/FastTelethonhelper/zip/refs/heads/main
 libtorrent
 requests
 bencode.py
-urllib
