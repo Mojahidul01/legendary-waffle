@@ -10,6 +10,8 @@ To run this project, you will need to add the following environment variables to
 
 - `BOT_TOKEN` Search [@BotFather](https://t.me/botfather) in telegram.
 
+- `TIMEOUT` Timeout for a magnet
+
 
 # Deployment
 

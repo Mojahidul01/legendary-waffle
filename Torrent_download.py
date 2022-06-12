@@ -33,7 +33,7 @@ async def download_torrent(link, event):
         end = time.time()
         if (int(end-begin) > timeout_time):
             raise Exception("TimeoutError")
-        time.sleep(1)
+        # time.sleep(1)
     if cancel == True: raise Exception("process cancelled")
 
     await bot.edit_message(event.chat_id,message,"Got Metadata, Starting Torrent Download...")
